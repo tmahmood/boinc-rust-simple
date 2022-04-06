@@ -33,6 +33,7 @@ use std::{
 };
 use tokio::{net::TcpStream, sync::Mutex};
 use tower::ServiceExt;
+use treexml::Element;
 
 fn verify_rpc_reply_contents(data: &[treexml::Element]) -> Result<bool, Error> {
     let mut success = false;
@@ -275,7 +276,7 @@ impl<'a> From<&'a treexml::Element> for models::HostInfo {
 }
 
 type DaemonStreamFuture =
-    Pin<Box<dyn Future<Output = Result<DaemonStream<TcpStream>, Error>> + Send + Sync + 'static>>;
+Pin<Box<dyn Future<Output=Result<DaemonStream<TcpStream>, Error>> + Send + Sync + 'static>>;
 
 enum ConnState {
     Connecting(DaemonStreamFuture),
@@ -302,12 +303,12 @@ impl Transport {
 impl tower::Service<Vec<treexml::Element>> for Transport {
     type Response = Vec<treexml::Element>;
     type Error = Error;
-    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
+    type Future = Pin<Box<dyn Future<Output=Result<Self::Response, Self::Error>>>>;
 
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         let mut g = match self.state.try_lock() {
             Ok(g) => g,
-            Err(_) => return Poll::Pending,
+            Err(e) => { return Poll::Pending; }
         };
 
         let (state, out) = match g.take().unwrap() {
@@ -321,9 +322,9 @@ impl tower::Service<Vec<treexml::Element>> for Transport {
             }
             ConnState::Ready(conn) => (Some(ConnState::Ready(conn)), Poll::Ready(Ok(()))),
             ConnState::Error(error) => (
-                Some(ConnState::Error(error.clone())),
-                Poll::Ready(Err(error)),
-            ),
+                    Some(ConnState::Error(error.clone())),
+                    Poll::Ready(Err(error)),
+                ),
         };
 
         *g = state;
@@ -334,18 +335,16 @@ impl tower::Service<Vec<treexml::Element>> for Transport {
         let state = self.state.clone();
         Box::pin(async move {
             let mut state = state.lock().await;
-
             let mut conn = match state.take() {
                 Some(ConnState::Ready(conn)) => conn,
                 _ => unreachable!(),
             };
-
             let query_res = conn.query(req).await;
-
             if let Err(e) = &query_res {
                 *state = Some(ConnState::Error(e.clone()));
+            } else {
+                *state = Some(ConnState::Ready(conn));
             }
-
             query_res
         })
     }
@@ -356,8 +355,8 @@ pub struct Client<S> {
 }
 
 impl<S> Client<S>
-where
-    S: tower::Service<Vec<treexml::Element>, Response = Vec<treexml::Element>, Error = Error>,
+    where
+        S: tower::Service<Vec<treexml::Element>, Response=Vec<treexml::Element>, Error=Error>,
 {
     pub fn new(transport: S) -> Self {
         Self { transport }
@@ -437,7 +436,7 @@ where
             "msgs",
             "msg",
         )
-        .await
+            .await
     }
 
     pub async fn get_projects(&mut self) -> Result<Vec<models::ProjectInfo>, Error> {
@@ -540,7 +539,7 @@ where
             "results",
             "result",
         )
-        .await
+            .await
     }
 
     pub async fn set_mode(
@@ -558,14 +557,14 @@ where
                     models::Component::GPU => "gpu",
                     models::Component::Network => "network",
                 }
-                .to_string();
+                    .to_string();
                 let mode_desc = match m {
                     models::RunMode::Always => "always",
                     models::RunMode::Auto => "auto",
                     models::RunMode::Never => "never",
                     models::RunMode::Restore => "restore",
                 }
-                .to_string();
+                    .to_string();
 
                 let mut node = treexml::Element::new(format!("set_{}_mode", &comp_desc));
                 let mut dur_node = treexml::Element::new("duration");
