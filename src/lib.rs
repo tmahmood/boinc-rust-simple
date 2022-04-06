@@ -368,7 +368,7 @@ where
         req_data: Vec<treexml::Element>,
         object_tag: &str,
     ) -> Result<T, Error> {
-        self.transport.ready_and().await?;
+        self.transport.ready().await?;
         let data = self.transport.call(req_data).await?;
         verify_rpc_reply_contents(&data)?;
         for child in &data {
@@ -396,7 +396,7 @@ where
     ) -> Result<Vec<T>, Error> {
         let mut v = Vec::new();
         {
-            self.transport.ready_and().await?;
+            self.transport.ready().await?;
             let data = self.transport.call(req_data).await?;
             verify_rpc_reply_contents(&data)?;
             let mut success = false;
@@ -451,7 +451,7 @@ where
     }
 
     pub async fn get_account_manager_rpc_status(&mut self) -> Result<i32, Error> {
-        self.transport.ready_and().await?;
+        self.transport.ready().await?;
         let data = self
             .transport
             .call(vec![treexml::Element::new("acct_mgr_rpc_poll")])
@@ -495,7 +495,7 @@ where
                 node
             },
         ];
-        self.transport.ready_and().await?;
+        self.transport.ready().await?;
         let root_node = self.transport.call(vec![req_node]).await?;
         Ok(verify_rpc_reply_contents(&root_node)?)
     }
@@ -549,7 +549,7 @@ where
         m: models::RunMode,
         duration: f64,
     ) -> Result<(), Error> {
-        self.transport.ready_and().await?;
+        self.transport.ready().await?;
         let rsp_root = self
             .transport
             .call(vec![{
@@ -585,7 +585,7 @@ where
     }
 
     pub async fn set_language(&mut self, v: &str) -> Result<(), Error> {
-        self.transport.ready_and().await?;
+        self.transport.ready().await?;
         verify_rpc_reply_contents(
             &self
                 .transport

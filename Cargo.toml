@@ -16,15 +16,15 @@ categories = [
 license = "Apache-2.0"
 
 [dependencies]
-bytes = "0.5"
-encoding = "0.2"
-futures = "0.3"
-rust-crypto = "0.2"
-tokio = { version = "0.2", features = ["dns", "sync", "tcp"] }
-tokio-util = { version = "0.3", features = ["codec"] }
-tower = "0.3"
-tracing = "0.1"
-treexml = "0.7"
+bytes = "^1.1.0"
+encoding = "^0.2.33"
+futures = "^0.3.21"
+rust-crypto = "^0.2.36"
+tokio = { version = "^1.17.0", features = ["sync", "net", "rt-multi-thread"] }
+tokio-util = { version = "^0.7.1", features = ["codec"] }
+tower = { version="^0.4.12", features = ["util"] }
+tracing = "^0.1.32"
+treexml = "^0.7.0"
 
 [dev-dependencies]
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "^1.17.0", features = ["macros"] }
